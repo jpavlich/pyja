@@ -13,6 +13,12 @@ version = "0.1-SNAPSHOT"
 DEP_STR = f"{groupId}:{artifactId}:jar:{version}:compile"
 
 
+DEPENDENCY = "d"
+SUPERCLASS = "s"
+FIELD = "f"
+METHOD_PARAM = "p"
+METHOD_RETURN_TYPE = "r"
+
 class JavaParser(object):
     def __init__(self):
         super().__init__()
@@ -21,21 +27,26 @@ class JavaParser(object):
         self.jvm = jvm
         self.jvm.add_classpath(*MavenProject(DepURI(DEP_STR)).jars())
 
-    def dependencies(self, *maven_projects: "MavenProject"):
+    def init(self, *maven_projects: "MavenProject"):
         sources: Set[str] = set({})
         classpath: Set[str] = set({})
         for p in maven_projects:
             sources.add(p.source_path())
             classpath.update(p.jars())
 
-        # print("---")
-        # print(sources)
-        # print("\",\n\"".join(classpath))
-
         from org.jpavlich import JavaParserUtil
 
-        app = JavaParserUtil()
-        return app.dependencies(list(sources), list(classpath))
+        self.jpu = JavaParserUtil()
+        self.jpu.init(list(sources), list(classpath))
+
+    def classes(self):
+        return self.jpu.getClasses()
+
+    def dependencies(self):
+        return self.jpu.getDependencies()
+
+    def source_classes(self):
+        return self.jpu.getSourceClasses()
 
 
 if __name__ == "__main__":
@@ -47,8 +58,7 @@ if __name__ == "__main__":
     # jvm must start before doing the parsing
     jvm.start()
 
-    deps = p.dependencies(MavenProject(PathURI(f"{Path.home()}/git/spring-petclinic/pom.xml")))
-    for dep in deps:
-        print(dep)
+    p.init(MavenProject(PathURI(f"{Path.home()}/git/spring-petclinic/pom.xml")))
+    
 
     jvm.stop()
