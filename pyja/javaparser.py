@@ -27,7 +27,7 @@ class JavaParser(object):
         self.jvm = jvm
         self.jvm.add_classpath(*Project(DepURI(DEP_STR)).jars())
 
-    def init(self, *maven_projects: "MavenProject"):
+    def init(self, *maven_projects: "Project"):
         sources: Set[str] = set({})
         classpath: Set[str] = set({})
         for p in maven_projects:
