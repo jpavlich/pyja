@@ -1,3 +1,3 @@
 # pyja
-Java Analysis for Python
+PYthon Java Analysis
 

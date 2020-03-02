@@ -13,19 +13,26 @@ import java.util.Optional;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.LambdaExpr;
+import com.github.javaparser.ast.expr.VariableDeclarationExpr;
+import com.github.javaparser.ast.nodeTypes.NodeWithVariables;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.MethodUsage;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedValueDeclaration;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
@@ -33,6 +40,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSol
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import com.github.javaparser.utils.Pair;
 import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
 
@@ -47,6 +55,7 @@ public class JavaParserUtil {
     public static String FIELD = "f";
     public static String METHOD_PARAM = "p";
     public static String METHOD_RETURN_TYPE = "r";
+    public static String VARIABLE = "v";
 
     /**
      * @param sourcePaths Folders where to look for java files
@@ -66,6 +75,88 @@ public class JavaParserUtil {
     }
 
     public List<List<String>> getDependencies() {
+        final List<List<String>> deps = new ArrayList<>();
+        for (final CompilationUnit cu : compilationUnits) {
+            cu.accept(new VoidVisitorAdapter<ClassOrInterfaceDeclaration>() {
+                @Override
+                public void visit(ClassOrInterfaceDeclaration n, ClassOrInterfaceDeclaration c) {
+                    if (c == null) {
+                        c = n;
+                    }
+                    final String cName = c.getFullyQualifiedName().get();
+                    final ResolvedReferenceTypeDeclaration ct = c.resolve();
+                    for (final ResolvedReferenceType sup : ct.getAllAncestors()) {
+                        deps.add(Arrays.asList(cName, SUPERCLASS, sup.getQualifiedName()));
+                    }
+                    super.visit(n, c);
+                }
+
+                @Override
+                public void visit(Parameter n, ClassOrInterfaceDeclaration c) {
+                    try {
+                        final String cName = c.getFullyQualifiedName().get();
+                        ResolvedParameterDeclaration param = n.resolve();
+                        ResolvedType t = param.getType();
+                        if (t.isReferenceType()) {
+                            deps.add(Arrays.asList(cName, METHOD_PARAM, t.asReferenceType().getQualifiedName()));
+                        }
+                    } catch (Exception e) {
+                        Node parent = n.getParentNode().get();
+                        if (parent instanceof LambdaExpr) {
+                            System.err.println("Lambda expression cannot be resolved: \n" + parent);
+                        } else {
+                            e.printStackTrace();
+                        }
+                    }
+                    super.visit(n, c);
+                }
+
+                @Override
+                public void visit(FieldDeclaration n, ClassOrInterfaceDeclaration c) {
+                    processVar(n, FIELD, c);
+                    super.visit(n, c);
+                }
+
+                @Override
+                public void visit(MethodDeclaration n, ClassOrInterfaceDeclaration c) {
+                    final String cName = c.getFullyQualifiedName().get();
+                    ResolvedType t = n.resolve().getReturnType();
+                    if (t.isReferenceType()) {
+                        deps.add(Arrays.asList(cName, METHOD_RETURN_TYPE, t.asReferenceType().getQualifiedName()));
+                    }
+                    super.visit(n, c);
+                }
+
+                @Override
+                public void visit(VariableDeclarationExpr n, ClassOrInterfaceDeclaration c) {
+                    processVar(n, VARIABLE, c);
+                    super.visit(n, c);
+                }
+
+                public <V extends Node> void processVar(NodeWithVariables<V> n, String depType,
+                        ClassOrInterfaceDeclaration c) {
+                    final String cName = c.getFullyQualifiedName().get();
+                    for (VariableDeclarator v : n.getVariables()) {
+                        ResolvedValueDeclaration rv = v.resolve();
+                        ResolvedType t = rv.getType();
+                        if (t.isReferenceType()) {
+                            deps.add(Arrays.asList(cName, depType, t.asReferenceType().getQualifiedName()));
+                            for (Pair<ResolvedTypeParameterDeclaration, ResolvedType> tPair : t.asReferenceType()
+                            .getTypeParametersMap()) {
+                                if(tPair.b.isReferenceType()) {
+                                    deps.add(Arrays.asList(cName, depType,tPair.b.asReferenceType().getQualifiedName()));
+                                }
+                            }
+                        }
+                    }
+                }
+            }, null);
+
+        }
+        return deps;
+    }
+
+    public List<List<String>> getDependencies2() {
         final List<List<String>> deps = new ArrayList<>();
         for (final CompilationUnit cu : compilationUnits) {
             final List<ClassOrInterfaceDeclaration> classes = cu.findAll(ClassOrInterfaceDeclaration.class);
@@ -121,8 +212,8 @@ public class JavaParserUtil {
     }
 
     private Collection<? extends List<String>> getMethodReturnTypeDeps(final ClassOrInterfaceDeclaration c) {
-        final String cName = c.getFullyQualifiedName().get();
         final List<List<String>> deps = new ArrayList<>();
+        final String cName = c.getFullyQualifiedName().get();
         final ResolvedReferenceTypeDeclaration ct = c.resolve();
         for (final MethodUsage m : ct.getAllMethods()) {
             final ResolvedMethodDeclaration md = m.getDeclaration();
@@ -130,7 +221,7 @@ public class JavaParserUtil {
             if (t.isReferenceType()) {
                 deps.add(Arrays.asList(cName, METHOD_RETURN_TYPE, t.asReferenceType().getQualifiedName()));
             }
-            
+
         }
         return deps;
     }
@@ -146,7 +237,8 @@ public class JavaParserUtil {
                 for (final Type t : types) {
                     if (t instanceof ClassOrInterfaceType) {
                         if (isDep(t)) {
-                            deps.add(Arrays.asList(cName, DEPENDENCY, t.resolve().asReferenceType().getQualifiedName()));
+                            deps.add(
+                                    Arrays.asList(cName, DEPENDENCY, t.resolve().asReferenceType().getQualifiedName()));
                         }
                     }
                 }
@@ -193,6 +285,7 @@ public class JavaParserUtil {
 
     /**
      * Parses all java files in source_dirs.
+     * 
      * @return A list of CompilationUnit of the parsed java files
      * @throws IOException
      */

@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import *
 
 M2_PATH: str = f"{Path.home()}/.m2/repository"
+# TODO Support Gradle
 
-
-class MavenURI(object):
+class AbstractURI(object):
     def __init__(self, m2path):
         super().__init__()
         self.m2path = m2path
@@ -30,8 +30,11 @@ class MavenURI(object):
     def base_path(self) -> str:
         pass
 
+    def id(self) -> str:
+        pass
 
-class PathURI(MavenURI):
+
+class PathURI(AbstractURI):
     def __init__(self, pom_path, m2path=M2_PATH):
         super().__init__(m2path)
         self._pom_path = pom_path
@@ -45,8 +48,10 @@ class PathURI(MavenURI):
     def base_path(self) -> str:
         return os.path.dirname(self._pom_path)
 
+    def id(self) -> str:
+        return os.path.basename(os.path.dirname(self._pom_path))
 
-class DepURI(MavenURI):
+class DepURI(AbstractURI):
     def __init__(self, uri: str, m2path=M2_PATH):
         super().__init__(m2path)
         dep = uri.strip().split(":")
@@ -65,11 +70,13 @@ class DepURI(MavenURI):
     def base_path(self) -> str:
         return f"{self.m2path}/{self.folder}/{self.artifactId}/{self.version}"
 
+    def id(self) -> str:
+        return f"{self.groupId}-{self.artifactId}-{self.version}"
 
-class MavenProject(object):
-    def __init__(self, uri: MavenURI):
+class Project(object):
+    def __init__(self, uri: AbstractURI):
         super().__init__()
-        self.uri: MavenURI = uri
+        self.uri: AbstractURI = uri
         self.pom_path = uri.pom_path()
         self.pom_file = uri.pom_file()
 
@@ -81,6 +88,9 @@ class MavenProject(object):
             return target_folder
         else:
             return None
+
+    def id(self):
+        return self.uri.id()
 
     def jars(self) -> Iterable[str]:
         # Uses command-line maven to get the list of dependencies
@@ -117,7 +127,7 @@ if __name__ == "__main__":
     version = "0.1-SNAPSHOT"
     DEP_STR = f"{groupId}:{artifactId}:jar:{version}:compile"
 
-    p = MavenProject(PathURI(f"{Path.home()}/git/spring-petclinic/pom.xml"))
+    p = Project(PathURI(f"{Path.home()}/git/spring-petclinic/pom.xml"))
     # p = MavenProject(DepURI(DEP_STR))
     # print(p.source_path())
     # print("\n".join(list(p.jars())))
