@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 
 import org.jpavlich.JavaParserUtil;
+import org.jpavlich.JavaParserUtil.ClassInfo;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -11,9 +13,12 @@ import org.junit.Test;
  */
 public class JavaParserUtilTest {
 
-    @Test
-    public void test() throws IOException {
-        JavaParserUtil p = new JavaParserUtil();
+    JavaParserUtil parser;
+
+    @Before
+    public void setup() {
+        parser = new JavaParserUtil();
+
         String home = System.getProperty("user.home");
 
         String[] cp = new String[] { home + "/.m2/repository/org/objenesis/objenesis/2.6/objenesis-2.6.jar",
@@ -132,11 +137,21 @@ public class JavaParserUtilTest {
                 home + "/.m2/repository/org/springframework/spring-jcl/5.2.3.RELEASE/spring-jcl-5.2.3.RELEASE.jar",
                 home + "/.m2/repository/org/thymeleaf/extras/thymeleaf-extras-java8time/3.0.4.RELEASE/thymeleaf-extras-java8time-3.0.4.RELEASE.jar" };
 
-        p.init(new String[] { home + "/git/spring-petclinic/src/main/java" }, cp);
-        List<List<String>> deps = p.getDependencies(); // TODO Assert
+        parser.init(new String[] { home + "/git/spring-petclinic/src/main/java" }, cp);
+    }
+
+    @Test
+    public void getDependencies() throws IOException {
+
+        List<List<String>> deps = parser.getDependencies(); // TODO Assert
         System.out.println(deps);
-        // System.out.println("Sources");
-        // List<String> sources = p.getSourceClasses();
-        // System.out.println(sources);
+    }
+
+
+    @Test
+    public void getSourceClasses() throws IOException {
+
+        List<ClassInfo> deps = parser.getSourceClasses(); // TODO Assert
+        System.out.println(deps);
     }
 }

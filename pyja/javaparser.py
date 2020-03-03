@@ -39,9 +39,6 @@ class JavaParser(object):
         self.jpu = JavaParserUtil()
         self.jpu.init(list(sources), list(classpath))
 
-    def classes(self):
-        return self.jpu.getClasses()
-
     def dependencies(self):
         return self.jpu.getDependencies()
 

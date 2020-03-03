@@ -7,8 +7,8 @@ import networkx as nx
 import os
 import sys
 
-def simple_name(name:str) -> str:
-   return os.path.splitext(str(name))[1][1:]
+def to_string(class_info) -> str:
+   return f"{os.path.splitext(str(class_info.name))[1][1:]}{' e' if class_info.entity else ''}{' c' if class_info.controller else ''}{' r' if class_info.repository else ''}"
 
 
 
@@ -27,30 +27,30 @@ if __name__ == "__main__":
 
     project = Project(PathURI(sys.argv[1]))
     p.init(project)
-    nodes = p.classes()
-    sources = [simple_name(s) for s in p.source_classes()]
+    
+    nodes = p.source_classes()
+    print(nodes)
     edges = p.dependencies()
+    print(edges)
 
     G = nx.DiGraph()
 
-    G.add_nodes_from(simple_name(n) for n in nodes)
+    for n in nodes:
+        G.add_node(n.name, label=to_string(n))
 
     for s,d,t in edges:
-        source = simple_name(s)
-        target = simple_name(t)
         label = str(d)
-        if  G.has_edge(source,target):
-            G.get_edge_data(source,target)["depTypes"].append(label)
+        if  G.has_edge(s,t):
+            G.get_edge_data(s,t)["depTypes"].append(label)
         else:
-            G.add_edge(source, target, depTypes=[label])
+            G.add_edge(s, t, depTypes=[label])
     
-    print(G.get_edge_data("PetController","Pet"))
 
-    for source, target in G.edges():
-        depTypes = G.get_edge_data(source, target)["depTypes"]
-        G.get_edge_data(source, target)["label"] = ",".join(set(depTypes))
+    for s, t in G.edges():
+        depTypes = G.get_edge_data(s, t)["depTypes"]
+        G.get_edge_data(s, t)["label"] = ",".join(set(depTypes))
 
-    S = G.subgraph(sources)
+    S = G.subgraph([n.name for n in nodes])
 
     
 
