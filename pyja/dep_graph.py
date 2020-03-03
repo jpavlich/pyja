@@ -8,7 +8,7 @@ import os
 import sys
 
 def to_string(class_info) -> str:
-   return f"{os.path.splitext(str(class_info.name))[1][1:]}{' e' if class_info.entity else ''}{' c' if class_info.controller else ''}{' r' if class_info.repository else ''}"
+   return os.path.splitext(str(class_info.name))[1][1:]
 
 
 
@@ -28,18 +28,18 @@ if __name__ == "__main__":
     project = Project(PathURI(sys.argv[1]))
     p.init(project)
     
-    nodes = p.source_classes()
-    print(nodes)
+    classes = p.source_classes()
     edges = p.dependencies()
-    print(edges)
 
     G = nx.DiGraph()
 
-    for n in nodes:
-        G.add_node(n.name, label=to_string(n))
+    for c in classes:
+        shape = "trapezium" if c.entity else "ellipse" if c.controller else "cylinder" if c.repository else "box"
+        G.add_node(c.name, label=to_string(c), shape=shape)
 
     for s,d,t in edges:
         label = str(d)
+        
         if  G.has_edge(s,t):
             G.get_edge_data(s,t)["depTypes"].append(label)
         else:
@@ -48,9 +48,9 @@ if __name__ == "__main__":
 
     for s, t in G.edges():
         depTypes = G.get_edge_data(s, t)["depTypes"]
-        G.get_edge_data(s, t)["label"] = ",".join(set(depTypes))
+        G.get_edge_data(s, t)["label"] = ",".join(sorted(set(depTypes)))
 
-    S = G.subgraph([n.name for n in nodes])
+    S = G.subgraph([n.name for n in classes])
 
     
 

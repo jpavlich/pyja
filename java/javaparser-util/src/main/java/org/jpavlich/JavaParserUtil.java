@@ -7,38 +7,25 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.persistence.Entity;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
-import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.LambdaExpr;
 import com.github.javaparser.ast.expr.VariableDeclarationExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithVariables;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import com.github.javaparser.resolution.MethodUsage;
-import com.github.javaparser.resolution.UnsolvedSymbolException;
-import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedInterfaceDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
@@ -130,7 +117,6 @@ public class JavaParserUtil {
             final File f = new File(cp);
             if (f.isFile() && f.getName().endsWith(".jar")) {
                 typeSolver.add(new JarTypeSolver(cp));
-                // System.out.println(cp);
             }
         }
 
@@ -178,6 +164,10 @@ public class JavaParserUtil {
     }
 
     public List<List<String>> getDependencies() {
+        return getDependencies(false, false);
+    }
+
+    public List<List<String>> getDependencies(boolean includeGetters, boolean includeSetters) {
         final List<List<String>> deps = new ArrayList<>();
         for (final CompilationUnit cu : compilationUnits) {
             cu.accept(new VoidVisitorAdapter<ClassOrInterfaceDeclaration>() {
@@ -199,9 +189,14 @@ public class JavaParserUtil {
                     try {
                         final String cName = c.getFullyQualifiedName().get();
                         ResolvedParameterDeclaration param = n.resolve();
-                        ResolvedType t = param.getType();
-                        if (t.isReferenceType()) {
-                            deps.add(Arrays.asList(cName, METHOD_PARAM, t.asReferenceType().getQualifiedName()));
+                        CallableDeclaration<?> m = n.findAncestor(CallableDeclaration.class).get();
+
+                        if (includeGetters && isGetter(m) || includeSetters && isSetter(m)
+                                || !isGetter(m) && !isSetter(m)) {
+                            ResolvedType t = param.getType();
+                            if (t.isReferenceType()) {
+                                deps.add(Arrays.asList(cName, METHOD_PARAM, t.asReferenceType().getQualifiedName()));
+                            }
                         }
                     } catch (Exception e) {
                         Node parent = n.getParentNode().get();
@@ -223,9 +218,12 @@ public class JavaParserUtil {
                 @Override
                 public void visit(MethodDeclaration n, ClassOrInterfaceDeclaration c) {
                     final String cName = c.getFullyQualifiedName().get();
-                    ResolvedType t = n.resolve().getReturnType();
-                    if (t.isReferenceType()) {
-                        deps.add(Arrays.asList(cName, METHOD_RETURN_TYPE, t.asReferenceType().getQualifiedName()));
+                    if (includeGetters && isGetter(n) || includeSetters && isSetter(n)
+                            || !isGetter(n) && !isSetter(n)) {
+                        ResolvedType t = n.resolve().getReturnType();
+                        if (t.isReferenceType()) {
+                            deps.add(Arrays.asList(cName, METHOD_RETURN_TYPE, t.asReferenceType().getQualifiedName()));
+                        }
                     }
                     super.visit(n, c);
                 }
@@ -258,6 +256,14 @@ public class JavaParserUtil {
 
         }
         return deps;
+    }
+
+    protected boolean isGetter(CallableDeclaration<?> n) {
+        return n.getNameAsString().startsWith("get") && n.getParameters().isEmpty();
+    }
+
+    protected boolean isSetter(CallableDeclaration<?> n) {
+        return n.getNameAsString().startsWith("set") && n.getParameters().size() == 1;
     }
 
 }
