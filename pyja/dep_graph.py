@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from pyja.javaparser import JavaParser
-from pyja.java_project import Project, PathURI
+from pyja.java_project import MavenProject, PathURI
 from pathlib import Path
 from pyja.jvm import JvmMgr
 import networkx as nx
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # jvm must start before doing the parsing
     jvm.start()
 
-    project = Project(PathURI(sys.argv[1]))
+    project = MavenProject(PathURI(sys.argv[1]))
     p.init(project)
     
     classes = p.source_classes()

@@ -1,7 +1,7 @@
 import jpype
 import jpype.imports
 from jpype.types import *
-from pyja.java_project import Project, DepURI, PathURI
+from pyja.java_project import MavenProject, DepURI, PathURI
 from typing import *
 from pathlib import Path
 from pyja.jvm import JvmMgr
@@ -25,14 +25,14 @@ class JavaParser(object):
 
     def configure_jvm(self, jvm: JvmMgr):
         self.jvm = jvm
-        self.jvm.add_classpath(*Project(DepURI(DEP_STR)).jars())
+        self.jvm.add_classpath(*MavenProject(DepURI(DEP_STR)).all_jars())
 
-    def init(self, *maven_projects: "Project"):
+    def init(self, *maven_projects: "MavenProject"):
         sources: Set[str] = set({})
         classpath: Set[str] = set({})
         for p in maven_projects:
             sources.add(p.source_path())
-            classpath.update(p.jars())
+            classpath.update(p.all_jars())
 
         from org.jpavlich import JavaParserUtil
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # jvm must start before doing the parsing
     jvm.start()
 
-    p.init(Project(PathURI(f"{Path.home()}/git/spring-petclinic/pom.xml")))
+    p.init(MavenProject(PathURI(f"{Path.home()}/git/spring-petclinic/pom.xml")))
     
 
     jvm.stop()
