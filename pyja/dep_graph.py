@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from pyja.javaparser import JavaParser
-from pyja.maven import Project, PathURI
+from pyja.java_project import Project, PathURI
 from pathlib import Path
 from pyja.jvm import JvmMgr
 import networkx as nx
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     A = nx.nx_agraph.to_agraph(S)
     A.layout(prog="dot")  
-    A.draw(f"tmp/{project.id()}.png")
+    A.draw(f"tmp/{project.id()}.pdf")
 
 
     jvm.stop()

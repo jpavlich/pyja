@@ -1,7 +1,7 @@
 import jpype
 import jpype.imports
 from jpype.types import *
-from pyja.maven import Project, DepURI, PathURI
+from pyja.java_project import Project, DepURI, PathURI
 from typing import *
 from pathlib import Path
 from pyja.jvm import JvmMgr

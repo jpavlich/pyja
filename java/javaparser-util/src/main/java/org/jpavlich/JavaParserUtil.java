@@ -73,7 +73,7 @@ public class JavaParserUtil {
     public static String TYPE_PARAMETER = "t";
     public static String FIELD = "f";
     public static String METHOD_PARAM = "p";
-    public static String METHOD_RETURN_TYPE = "r";
+    public static String RETURN_TYPE = "r";
     public static String VARIABLE = "v";
 
     /**
@@ -198,6 +198,7 @@ public class JavaParserUtil {
                             ResolvedType t = param.getType();
                             if (t.isReferenceType()) {
                                 deps.add(Arrays.asList(cName, METHOD_PARAM, t.asReferenceType().getQualifiedName()));
+                                addTypeParameterDeps(c, METHOD_PARAM, t.asReferenceType());
                             }
                         }
                     } catch (Exception e) {
@@ -224,8 +225,8 @@ public class JavaParserUtil {
                             || !isGetter(n) && !isSetter(n)) {
                         ResolvedType t = n.resolve().getReturnType();
                         if (t.isReferenceType()) {
-                            deps.add(Arrays.asList(cName, METHOD_RETURN_TYPE, t.asReferenceType().getQualifiedName()));
-                            addTypeParameterDeps(c, METHOD_RETURN_TYPE, t);
+                            deps.add(Arrays.asList(cName, RETURN_TYPE, t.asReferenceType().getQualifiedName()));
+                            addTypeParameterDeps(c, RETURN_TYPE, t.asReferenceType());
                         }
                     }
                     super.visit(n, c);
@@ -237,12 +238,13 @@ public class JavaParserUtil {
                     super.visit(n, c);
                 }
 
-                public void addTypeParameterDeps(ClassOrInterfaceDeclaration c, String depType, ResolvedType t) {
+                public void addTypeParameterDeps(ClassOrInterfaceDeclaration c, String depType, ResolvedReferenceType t) {
                     final String cName = c.getFullyQualifiedName().get();
-                    for (Pair<ResolvedTypeParameterDeclaration, ResolvedType> tPair : t.asReferenceType()
+                    for (Pair<ResolvedTypeParameterDeclaration, ResolvedType> tPair : t
                             .getTypeParametersMap()) {
                         if (tPair.b.isReferenceType()) {
                             deps.add(Arrays.asList(cName, depType, tPair.b.asReferenceType().getQualifiedName()));
+                            addTypeParameterDeps(c, depType, tPair.b.asReferenceType());
                         }
                     }
                 }
@@ -255,7 +257,7 @@ public class JavaParserUtil {
                         ResolvedType t = rv.getType();
                         if (t.isReferenceType()) {
                             deps.add(Arrays.asList(cName, depType, t.asReferenceType().getQualifiedName()));
-                            addTypeParameterDeps(c, depType, t);
+                            addTypeParameterDeps(c, depType, t.asReferenceType());
                         }
                     }
                 }
