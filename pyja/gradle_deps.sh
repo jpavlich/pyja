@@ -1,0 +1,2 @@
+#!/bin/bash
+gradle dependencies --build-file=$1 --configuration compile | grep "\-\-\- " | sed 's/^.*\-\-\- //' | sed 's/:[^:]* -> /:/'| sed 's/[(][*][)]//' | sed 's/ *$//'| grep -v "project " |sed '/^\n$/d' | sort | uniq 

@@ -4,178 +4,128 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import *
 from abc import ABC, abstractmethod
+from typing import *
+
+
+# gradle proj: build.gradle, no repo_path -> source folder, jars
+# gradel dep: gradle dep uri, gradle repo_path -> jars
+# maven proj: pom.xml, no repo path -> source folder, jars
+# maven dep: maven dep uri, m2 repo path -> jars
 
 
 M2_PATH: str = f"{Path.home()}/.m2/repository"
-# TODO Support Gradle
+GRADLE_PATH: str = f"{Path.home()}/.gradle/caches/modules-2/files-2.1"
 
 
-class AbstractURI(ABC):
-    def __init__(self, m2path):
+class ProjDesc(ABC):
+    def __init__(self, groupId, artifactId, version, scope):
         super().__init__()
-        self.m2path = m2path
-
-    def jars(self) -> Iterator[str]:
-        return (
-            j
-            for j in glob.iglob(f"{self.base_path()}/**/*.jar", recursive=True)
-            if not j.endswith("sources.jar") and not j.endswith("javadoc.jar")
-        )
-
-    @abstractmethod
-    def project_file(self) -> str:
-        pass
-
-    @abstractmethod
-    def project_file_path(self) -> str:
-        pass
-
-    @abstractmethod
-    def base_path(self) -> str:
-        pass
-
-    @abstractmethod
-    def id(self) -> str:
-        pass
+        self.groupId = groupId
+        self.artifactId = artifactId
+        self.version = version
+        self.scope = scope
 
 
-class PathURI(AbstractURI):
-    def __init__(self, project_file_path, m2path=M2_PATH):
-        super().__init__(m2path)
-        self._project_file_path = project_file_path
-
-    def project_file(self) -> str:
-        return os.path.basename(self._project_file_path)
-
-    def project_file_path(self) -> str:
-        return self._project_file_path
-
-    def base_path(self) -> str:
-        return os.path.dirname(self._project_file_path)
-
-    def id(self) -> str:
-        return os.path.basename(os.path.dirname(self._project_file_path))
-
-class DepURI(AbstractURI):
-    def __init__(self, uri: str, m2path=M2_PATH):
-        super().__init__(m2path)
-        dep = uri.strip().split(":")
-        self.groupId = dep[0]
-        self.folder = dep[0].replace(".", "/")
-        self.artifactId = dep[1]
-        self.version = dep[3]
-        self.scope = dep[4]
-
-    def project_file(self) -> str:
-        return f"{self.artifactId}-{self.version}.pom"
-
-    def project_file_path(self) -> str:
-        return f"{self.base_path()}/{self.project_file()}"
-
-    def base_path(self) -> str:
-        return f"{self.m2path}/{self.folder}/{self.artifactId}/{self.version}"
-
-    def id(self) -> str:
-        return f"{self.groupId}-{self.artifactId}-{self.version}"
-
-class Project(ABC):
-    def __init__(self, uri: AbstractURI):
-        super().__init__()
-        self.uri: AbstractURI = uri
-        self.project_file_path = uri.project_file_path()
-        self.project_file = uri.project_file()
-        self.proj_folder = os.path.dirname(self.project_file_path)
-
-    def source_path(self):
-        target_folder = f"{self.proj_folder}/src/main/java"
-        if Path(target_folder).is_dir():
-            return target_folder
-        else:
-            return None
-
-    def id(self):
-        return self.uri.id()
-
-    @abstractmethod
-    def all_jars(self) -> Iterable[str]:
-        pass
-
-class GradleProject(Project):
-
-    def __init__(self, uri: AbstractURI):
-        super().__init__(uri)
-
-    def all_jars(self) -> Iterable[str]:
-        out = subprocess.check_output(
-            [
-                "gradle",
-                "dependencies",
-                f'--build-file="{self.project_file}"',
-                "|",
-                'grep "\-\-\- "',
-                "|",
-                "sed 's/^.*\-\-\- //'",
-                "|",
-                "sed 's/:[^:]* -> //'"
-                "|",
-                "sed 's/[(][*][)]//'",
-                "|",
-                "sed 's/ *$//'",
-                "|",
-                "sort",
-                "|",
-                "uniq"
-            ],
-            cwd=self.proj_folder,
-            stderr=subprocess.STDOUT,
-        ).decode()
-
-        jars = self.uri.jars()
+def find_jars(folder) -> List[str]:
+    return [
+        j
+        for j in glob.iglob(f"{folder}/**/*.jar", recursive=True)
+        if not j.endswith("sources.jar") and not j.endswith("javadoc.jar")
+    ]
 
 
-class MavenProject(Project):
+def source_folder(proj_folder):
+    target_folder = f"{proj_folder}/src/main/java"
+    if Path(target_folder).is_dir():
+        return target_folder
+    else:
+        return None
 
-    def __init__(self, uri: AbstractURI):
-        super().__init__(uri)
 
-    def all_jars(self) -> Iterable[str]:
-        # Uses command-line maven to get the list of dependencies
-        out = subprocess.check_output(
+def maven_dependencies(project_file) -> Iterable[ProjDesc]:
+
+    return (
+        maven_dep_parse(dep_str)
+        for dep_str in subprocess.check_output(
             [
                 "mvn",
                 "-q",
                 "dependency:list",
                 "-DoutputFile=/dev/stdout",
                 "-f",
-                self.project_file,
+                project_file,
             ],
-            cwd=self.proj_folder,
-            stderr=subprocess.STDOUT,
-        ).decode()
+            # cwd=proj_folder,
+        )
+        .decode()
+        .split("\n")[2:-2]
+    )
 
-        # Parses each line to get the attributes of each dependency
-        # Then it retrieves all the jars for each dependency
 
-        # Find jars within this project
-        jars = self.uri.jars()
+def gradle_dependencies(project_file) -> Iterable[ProjDesc]:
+    return (
+        gradle_dep_parse(dep_str)
+        for dep_str in subprocess.check_output(
+            [f"{Path(__file__).resolve().parent}/gradle_deps.sh", project_file,],
+            # cwd=self.proj_folder,
+        )
+        .decode()
+        .split("\n")
+        if len(dep_str) > 0
+    )
 
-        # Find jars of this project's dependencies
-        dep_jars = (DepURI(line).jars() for line in out.split("\n")[2:-2])
 
-        # Combine all jars into one iterable
-        return itertools.chain(jars, *dep_jars)
+def gradle_dep_parse(dep_str):
+    dep = dep_str.strip().split(":")
+    print(dep)
+    return ProjDesc(groupId=dep[0], artifactId=dep[1], version=dep[2], scope="compile",)
+
+
+def maven_dep_parse(dep_str):
+    dep = dep_str.strip().split(":")
+    return ProjDesc(groupId=dep[0], artifactId=dep[1], version=dep[3], scope=dep[4],)
+
+
+def gradle_dep_folder(p: ProjDesc) -> str:
+    return f"{GRADLE_PATH}/{p.groupId}/{p.artifactId}/{p.version}"
+
+
+def maven_dep_folder(p: ProjDesc):
+    return f"{M2_PATH}/{p.groupId.replace('.', '/')}/{p.artifactId}/{p.version}"
+
+
+def is_gradle(proj_file: str) -> bool:
+    file = Path(proj_file).name
+    return file.endswith(".gradle")
+
+
+def is_maven(proj_file: str) -> bool:
+    file = Path(proj_file).name
+    return file == "pom.xml" or file.endswith(".pom")
+
+
+def all_jars(proj_file):
+    if is_gradle(proj_file):
+        jars = find_jars(Path(proj_file).parent)
+        for dep in gradle_dependencies(proj_file):
+            for jar in find_jars(gradle_dep_folder(dep)):
+                jars.append(jar)
+
+        return jars
+
+    elif is_maven(proj_file):
+        jars = find_jars(Path(proj_file).parent)
+        for dep in maven_dependencies(proj_file):
+            for jar in find_jars(maven_dep_folder(dep)):
+                jars.append(jar)
+
+        return jars
+    else:
+        raise Exception(f"Invalid project file {proj_file}")
 
 
 if __name__ == "__main__":
+    # print(all_jars(f"{Path.home()}/git/spring-petclinic/pom.xml"))
+    print(all_jars(f"{Path.home()}/git/sagan/sagan-site/build.gradle"))
 
-    groupId = "org.jpavlich"
-    artifactId = "javaparser-util"
-    version = "0.1-SNAPSHOT"
-    DEP_STR = f"{groupId}:{artifactId}:jar:{version}:compile"
-
-    p = MavenProject(PathURI(f"{Path.home()}/git/spring-petclinic/pom.xml"))
-    # p = MavenProject(DepURI(DEP_STR))
-    # print(p.source_path())
-    # print("\n".join(list(p.jars())))
