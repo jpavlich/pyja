@@ -5,12 +5,13 @@ from pyja.java_project import MavenProject, DepURI, PathURI
 from typing import *
 from pathlib import Path
 from pyja.jvm import JvmMgr
+from pyja.java_project import *
 
 
 groupId = "org.jpavlich"
 artifactId = "javaparser-util"
 version = "0.1-SNAPSHOT"
-DEP_STR = f"{groupId}:{artifactId}:jar:{version}:compile"
+
 
 
 DEPENDENCY = "d"
@@ -25,7 +26,7 @@ class JavaParser(object):
 
     def configure_jvm(self, jvm: JvmMgr):
         self.jvm = jvm
-        self.jvm.add_classpath(*MavenProject(DepURI(DEP_STR)).all_jars())
+        self.jvm.add_classpath(*all_jars())
 
     def init(self, *maven_projects: "MavenProject"):
         sources: Set[str] = set({})
