@@ -28,10 +28,10 @@ class JavaParser(object):
         javaparser_dep = Maven.dep(ProjDesc(groupId, artifactId, version))
         self.jvm.add_classpath(*javaparser_dep.all_jars())
 
-    def init(self, *maven_projects: "Maven"):
+    def init(self, *projects):
         sources: Set[str] = set({})
         classpath: Set[str] = set({})
-        for p in maven_projects:
+        for p in projects:
             sources.add(p.source_folder())
             classpath.update(p.all_jars())
 

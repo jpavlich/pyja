@@ -66,7 +66,7 @@ public class JavaParserUtil {
     private String[] classpath;
     private List<CompilationUnit> compilationUnits;
     private CombinedTypeSolver typeSolver;
-    private String REPOSITORY_INTERFACE;
+    private String REPOSITORY_INTERFACE = "org.springframework.data.repository.Repository";
 
     public static String DEPENDENCY = "d";
     public static String SUPERCLASS = "s";
@@ -81,6 +81,12 @@ public class JavaParserUtil {
      * @param classpath   List of jar files to support the type resolver
      */
     public void init(final String[] source_dirs, final String[] classpath) {
+        // System.out.println(Arrays.toString(source_dirs));
+        // System.out.print("{");
+        // for (String cp : classpath) {
+        //     System.out.print("\""+ cp +"\",");
+        // }
+        // System.out.println("};");
 
         for (final String sd : source_dirs) {
             sourcePaths.add(FileSystems.getDefault().getPath(sd));
@@ -88,7 +94,7 @@ public class JavaParserUtil {
         this.classpath = classpath;
         try {
             compilationUnits = parse();
-            REPOSITORY_INTERFACE = "org.springframework.data.repository.Repository";
+            
         } catch (final IOException e) {
             e.printStackTrace();
         }
@@ -171,9 +177,11 @@ public class JavaParserUtil {
     public List<List<String>> getDependencies(boolean includeGetters, boolean includeSetters) {
         final List<List<String>> deps = new ArrayList<>();
         for (final CompilationUnit cu : compilationUnits) {
+            // System.out.println(cu);
             cu.accept(new VoidVisitorAdapter<ClassOrInterfaceDeclaration>() {
                 @Override
                 public void visit(ClassOrInterfaceDeclaration n, ClassOrInterfaceDeclaration c) {
+                    System.out.println(n.getNameAsString());
                     if (c == null) {
                         c = n;
                     }

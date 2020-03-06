@@ -26,7 +26,7 @@ class ProjDesc(object):
         self.version = version
         self.scope = scope
 
-
+# TODO Support multimodule projects: find all child projects from the parent
 class Project(ABC):
     def __init__(self, proj_file):
         super().__init__()
@@ -68,8 +68,10 @@ class Gradle(Project):
     @staticmethod
     def dep_parse(dep_str):
         dep = dep_str.strip().split(":")
-        print(dep)
-        return ProjDesc(groupId=dep[0], artifactId=dep[1], version=dep[2])
+        # print(dep)
+        p = ProjDesc(groupId=dep[0], artifactId=dep[1], version=dep[2])
+        # print(Path(Gradle.dep_folder(p)).exists())
+        return p
 
     @staticmethod
     def dep_folder(p: ProjDesc) -> str:
