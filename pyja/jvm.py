@@ -13,7 +13,6 @@ class JvmMgr(object):
         print("Configuring classpath...")
         for path in classpath:
             jpype.addClassPath(path)
-            # print(f"Added: {path}")
         print("Classpath done")
 
     def start(self):
