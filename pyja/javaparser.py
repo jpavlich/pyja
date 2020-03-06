@@ -1,17 +1,15 @@
 import jpype
 import jpype.imports
 from jpype.types import *
-from pyja.java_project import MavenProject, DepURI, PathURI
 from typing import *
 from pathlib import Path
 from pyja.jvm import JvmMgr
-from pyja.java_project import *
+from pyja.java_project import Maven, ProjDesc, Project
 
 
 groupId = "org.jpavlich"
 artifactId = "javaparser-util"
 version = "0.1-SNAPSHOT"
-
 
 
 DEPENDENCY = "d"
@@ -20,19 +18,21 @@ FIELD = "f"
 METHOD_PARAM = "p"
 METHOD_RETURN_TYPE = "r"
 
+
 class JavaParser(object):
     def __init__(self):
         super().__init__()
 
     def configure_jvm(self, jvm: JvmMgr):
         self.jvm = jvm
-        self.jvm.add_classpath(*all_jars())
+        javaparser_dep = Maven.dep(ProjDesc(groupId, artifactId, version))
+        self.jvm.add_classpath(*javaparser_dep.all_jars())
 
-    def init(self, *maven_projects: "MavenProject"):
+    def init(self, *maven_projects: "Maven"):
         sources: Set[str] = set({})
         classpath: Set[str] = set({})
         for p in maven_projects:
-            sources.add(p.source_path())
+            sources.add(p.source_folder())
             classpath.update(p.all_jars())
 
         from org.jpavlich import JavaParserUtil
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     # jvm must start before doing the parsing
     jvm.start()
 
-    p.init(MavenProject(PathURI(f"{Path.home()}/git/spring-petclinic/pom.xml")))
+    p.init(Project.create(f"{Path.home()}/git/spring-petclinic/pom.xml"))
     
 
     jvm.stop()

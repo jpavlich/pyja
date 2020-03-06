@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from pyja.javaparser import JavaParser
-from pyja.java_project import MavenProject, PathURI
+from pyja.java_project import Project, ProjDesc
 from pathlib import Path
 from pyja.jvm import JvmMgr
 import networkx as nx
@@ -13,8 +13,8 @@ def to_string(class_info) -> str:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        print(f"{sys.argv[0]} <pom.xml>")
+    if len(sys.argv) < 3:
+        print(f"{sys.argv[0]} <pom.xml> <out_file>")
         exit(1)
 
     # Configure java jvm to parse java files
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # jvm must start before doing the parsing
     jvm.start()
 
-    project = MavenProject(PathURI(sys.argv[1]))
+    project = Project.create(sys.argv[1])
     p.init(project)
     
     classes = p.source_classes()
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     A = nx.nx_agraph.to_agraph(S)
     A.layout(prog="dot")  
-    A.draw(f"tmp/{project.id()}.pdf")
+    A.draw(sys.argv[2])
 
 
     jvm.stop()

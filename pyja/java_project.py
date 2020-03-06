@@ -34,7 +34,7 @@ class Project(ABC):
         self.proj_file = proj_file
 
     def source_folder(self):
-        target_folder = f"{proj_folder}/src/main/java"
+        target_folder = f"{self.proj_folder}/src/main/java"
         if Path(target_folder).is_dir():
             return target_folder
         else:
@@ -74,6 +74,14 @@ class Gradle(Project):
     @staticmethod
     def dep_folder(p: ProjDesc) -> str:
         return f"{GRADLE_PATH}/{p.groupId}/{p.artifactId}/{p.version}"
+
+    @staticmethod
+    def dep_file(p: ProjDesc) -> str:
+        raise NotImplementedError
+
+    @staticmethod
+    def dep(p: ProjDesc):
+        raise NotImplementedError
 
     def all_jars(self):
         jars = find_jars(self.proj_folder)
@@ -116,6 +124,14 @@ class Maven(Project):
     @staticmethod
     def dep_folder(p: ProjDesc):
         return f"{M2_PATH}/{p.groupId.replace('.', '/')}/{p.artifactId}/{p.version}"
+
+    @staticmethod
+    def dep_file(p: ProjDesc) -> str:
+        return f"{Maven.dep_folder(p)}/{p.artifactId}-{p.version}.pom"
+
+    @staticmethod
+    def dep(p: ProjDesc):
+        return Maven(Maven.dep_file(p))
 
     def all_jars(self):
         jars = find_jars(self.proj_folder)
