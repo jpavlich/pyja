@@ -21,8 +21,8 @@ public class JavaParserUtilGradleTest {
 
         String home = System.getProperty("user.home");
 
-        String[] cp = new String[] {
-                home + "/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-core/8.5.35/9c459829e1aa72669203dbbf6648dc3b6314644c/tomcat-embed-core-8.5.35.jar",
+        String[] cp = new String[] { home
+                + "/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-core/8.5.35/9c459829e1aa72669203dbbf6648dc3b6314644c/tomcat-embed-core-8.5.35.jar",
                 home + "/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-data-redis/1.5.18.RELEASE/1294c4cd42485a0f2028b0824ed74d474afb6f20/spring-boot-starter-data-redis-1.5.18.RELEASE.jar",
                 home + "/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-suggest/4.10.4/9a1b5e1974fe61e16d78e8a5b26f802cb2fb9863/lucene-suggest-4.10.4.jar",
                 home + "/.gradle/caches/modules-2/files-2.1/org.apache.lucene/lucene-core/4.10.4/cbdb5f686a85e391d9b88f0bae9e018f4d9472ff/lucene-core-4.10.4.jar",
@@ -164,20 +164,28 @@ public class JavaParserUtilGradleTest {
                 home + "/.gradle/caches/modules-2/files-2.1/net.minidev/accessors-smart/1.1/a527213f2fea112a04c9bdf0ec0264e34104cd08/accessors-smart-1.1.jar",
                 home + "/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-web/1.5.18.RELEASE/ac69c498381c10bb5add3c19b517f25c51341886/spring-boot-starter-web-1.5.18.RELEASE.jar", };
 
-        parser.init(new String[] { home + "/git/sagan/sagan-site/src/main/java" }, cp);
+        parser.init(new String[] { home + "/git/sagan/sagan-site/src/main/java",
+                home + "/git/sagan/sagan-site/../sagan-common/src/main/java" }, cp);
     }
 
     @Test
     public void getDependencies() throws IOException {
-
-    List<List<String>> deps = parser.getDependencies(); // TODO Assert
-    System.out.println(deps);
+        try {
+            List<List<String>> deps = parser.getDependencies();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+        // System.out.println(deps);
     }
 
-    // @Test
-    // public void getSourceClasses() throws IOException {
+    @Test
+    public void getSourceClasses() throws IOException {
 
-    // List<ClassInfo> deps = parser.getSourceClasses(); // TODO Assert
-    // System.out.println(deps);
-    // }
+        try {
+            List<ClassInfo> deps = parser.getSourceClasses(); // TODO Assert
+            System.out.println(deps);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -18,6 +18,16 @@ M2_PATH: str = f"{Path.home()}/.m2/repository"
 GRADLE_PATH: str = f"{Path.home()}/.gradle/caches/modules-2/files-2.1"
 
 
+def run_script(script, *args) -> List[str]:
+    return (
+        subprocess.check_output(
+            [f"{Path(__file__).resolve().parent}/scripts/{script}", *args],
+        )
+        .decode()
+        .split("\n")
+    )
+
+
 class ProjDesc(object):
     def __init__(self, groupId, artifactId, version, scope="compile"):
         super().__init__()
@@ -26,6 +36,7 @@ class ProjDesc(object):
         self.version = version
         self.scope = scope
 
+
 # TODO Support multimodule projects: find all child projects from the parent
 class Project(ABC):
     def __init__(self, proj_file):
@@ -33,12 +44,19 @@ class Project(ABC):
         self.proj_folder = Path(proj_file).parent
         self.proj_file = proj_file
 
-    def source_folder(self):
+    def source_folders(self) -> Iterable[str]:
+        deps = []
+        mm_deps = self.multimodule_dependencies()
+        for d in mm_deps:
+            folder = f"{self.proj_folder}/../{d}/src/main/java"
+            if (Path(folder).is_dir()):
+                deps.append(folder)
+
         target_folder = f"{self.proj_folder}/src/main/java"
         if Path(target_folder).is_dir():
-            return target_folder
-        else:
-            return None
+            deps.append(target_folder)
+
+        return deps
 
     @staticmethod
     def create(proj_file):
@@ -49,6 +67,10 @@ class Project(ABC):
         else:
             raise Exception(f"Invalid project file {proj_file}")
 
+    @abstractmethod
+    def multimodule_dependencies(self) -> Iterable[str]:
+        pass
+
 
 class Gradle(Project):
     def __init__(self, proj_file):
@@ -57,13 +79,16 @@ class Gradle(Project):
     def dependencies(self) -> Iterable[ProjDesc]:
         return (
             Gradle.dep_parse(dep_str)
-            for dep_str in subprocess.check_output(
-                [f"{Path(__file__).resolve().parent}/gradle_deps.sh", self.proj_file,],
-            )
-            .decode()
-            .split("\n")
+            for dep_str in run_script("gradle_deps.sh", self.proj_file)
             if len(dep_str) > 0
         )
+
+    def multimodule_dependencies(self) -> Iterable[str]:
+        return (
+            dep_str
+            for dep_str in run_script("gradle_multimodule_deps.sh", self.proj_file)
+            if len(dep_str) > 0
+        ) 
 
     @staticmethod
     def dep_parse(dep_str):
@@ -101,19 +126,7 @@ class Maven(Project):
     def dependencies(self) -> Iterable[ProjDesc]:
         return (
             Maven.dep_parse(dep_str)
-            for dep_str in subprocess.check_output(
-                [
-                    "mvn",
-                    "-q",
-                    "dependency:list",
-                    "-DoutputFile=/dev/stdout",
-                    "-f",
-                    self.proj_file,
-                ],
-                # cwd=proj_folder,
-            )
-            .decode()
-            .split("\n")[2:-2]
+            for dep_str in run_script("maven_deps.sh", self.proj_file,)[2:-2]
         )
 
     @staticmethod
@@ -142,6 +155,9 @@ class Maven(Project):
                 jars.append(jar)
 
         return jars
+
+    def multimodule_dependencies(self) -> Iterable[str]:
+        raise NotImplementedError
 
 
 def find_jars(folder) -> List[str]:

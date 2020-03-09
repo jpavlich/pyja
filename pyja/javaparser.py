@@ -32,7 +32,8 @@ class JavaParser(object):
         sources: Set[str] = set({})
         classpath: Set[str] = set({})
         for p in projects:
-            sources.add(p.source_folder())
+            sources.update(p.source_folders())
+            print(sources)
             classpath.update(p.all_jars())
 
         from org.jpavlich import JavaParserUtil
