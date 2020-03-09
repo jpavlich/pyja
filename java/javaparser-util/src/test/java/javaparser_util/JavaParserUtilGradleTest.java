@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.jpavlich.JavaParserUtil;
-import org.jpavlich.JavaParserUtil.ClassInfo;
+// import org.jpavlich.JavaParserUtil.ClassInfo;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,6 +50,7 @@ public class JavaParserUtilGradleTest {
                 home + "/.gradle/caches/modules-2/files-2.1/net.minidev/json-smart/2.2.1/5b9e5df7a62d1279b70dc882b041d249c4f0b002/json-smart-2.2.1.jar",
                 home + "/.gradle/caches/modules-2/files-2.1/org.springframework/spring-oxm/4.3.21.RELEASE/b14930c6b3c0b76ede7cad70e9cceb533076090c/spring-oxm-4.3.21.RELEASE.jar",
                 home + "/git/sagan/sagan-site/build/libs/sagan-site-1.0.0.BUILD-SNAPSHOT.jar",
+                home + "/git/sagan/sagan-site/build/libs/sagan-common-1.0.0.BUILD-SNAPSHOT.jar",
                 home + "/.gradle/caches/modules-2/files-2.1/com.rometools/rome-utils/1.12.0/c714531d168f733f1ebed7ee8f6ebd255bac52dc/rome-utils-1.12.0.jar",
                 home + "/.gradle/caches/modules-2/files-2.1/org.thymeleaf/thymeleaf/2.1.6.RELEASE/c362b4ecbeddc86a0cb7e767a88ce27e9c8147e6/thymeleaf-2.1.6.RELEASE.jar",
                 home + "/.gradle/caches/modules-2/files-2.1/org.thymeleaf/thymeleaf-spring4/2.1.6.RELEASE/a18784dab5e9337a53ce3213b205f927217849f2/thymeleaf-spring4-2.1.6.RELEASE.jar",
@@ -164,28 +165,27 @@ public class JavaParserUtilGradleTest {
                 home + "/.gradle/caches/modules-2/files-2.1/net.minidev/accessors-smart/1.1/a527213f2fea112a04c9bdf0ec0264e34104cd08/accessors-smart-1.1.jar",
                 home + "/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-web/1.5.18.RELEASE/ac69c498381c10bb5add3c19b517f25c51341886/spring-boot-starter-web-1.5.18.RELEASE.jar", };
 
-        parser.init(new String[] { home + "/git/sagan/sagan-site/src/main/java",
-                home + "/git/sagan/sagan-site/../sagan-common/src/main/java" }, cp);
+        // parser.init(cp);
     }
 
-    @Test
-    public void getDependencies() throws IOException {
-        try {
-            List<List<String>> deps = parser.getDependencies();
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-        }
-        // System.out.println(deps);
-    }
+    // @Test
+    // public void getDependencies() throws IOException {
+    //     try {
+    //         List<List<String>> deps = parser.getDependencies();
+    //     } catch (RuntimeException e) {
+    //         e.printStackTrace();
+    //     }
+    //     // System.out.println(deps);
+    // }
 
-    @Test
-    public void getSourceClasses() throws IOException {
+    // @Test
+    // public void getSourceClasses() throws IOException {
 
-        try {
-            List<ClassInfo> deps = parser.getSourceClasses(); // TODO Assert
-            System.out.println(deps);
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-        }
-    }
+    //     try {
+    //         List<ClassInfo> deps = parser.getSourceClasses(); // TODO Assert
+    //         System.out.println(deps);
+    //     } catch (RuntimeException e) {
+    //         e.printStackTrace();
+    //     }
+    // }
 }

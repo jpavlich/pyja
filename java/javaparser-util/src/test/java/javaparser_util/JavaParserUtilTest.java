@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.jpavlich.JavaParserUtil;
-import org.jpavlich.JavaParserUtil.ClassInfo;
+// import org.jpavlich.JavaParserUtil.ClassInfo;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -137,21 +137,21 @@ public class JavaParserUtilTest {
                 home + "/.m2/repository/org/springframework/spring-jcl/5.2.3.RELEASE/spring-jcl-5.2.3.RELEASE.jar",
                 home + "/.m2/repository/org/thymeleaf/extras/thymeleaf-extras-java8time/3.0.4.RELEASE/thymeleaf-extras-java8time-3.0.4.RELEASE.jar" };
 
-        parser.init(new String[] { home + "/git/spring-petclinic/src/main/java" }, cp);
+        // parser.init(new String[] { home + "/git/spring-petclinic/src/main/java" }, cp);
     }
 
-    @Test
-    public void getDependencies() throws IOException {
+    // @Test
+    // public void getDependencies() throws IOException {
 
-        List<List<String>> deps = parser.getDependencies(); // TODO Assert
-        System.out.println(deps);
-    }
+    //     List<List<String>> deps = parser.getDependencies(); // TODO Assert
+    //     System.out.println(deps);
+    // }
 
 
-    @Test
-    public void getSourceClasses() throws IOException {
+    // @Test
+    // public void getSourceClasses() throws IOException {
 
-        List<ClassInfo> deps = parser.getSourceClasses(); // TODO Assert
-        System.out.println(deps);
-    }
+    //     List<ClassInfo> deps = parser.getSourceClasses(); // TODO Assert
+    //     System.out.println(deps);
+    // }
 }
