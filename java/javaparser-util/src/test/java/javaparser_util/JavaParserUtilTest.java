@@ -143,15 +143,15 @@ public class JavaParserUtilTest {
     @Test
     public void getDependencies() throws IOException {
 
-        List<List<String>> deps = parser.getDependencies(); // TODO Assert
-        System.out.println(deps);
+        // List<List<String>> deps = parser.getDependencies(); // TODO Assert
+        // System.out.println(deps);
     }
 
 
     @Test
     public void getSourceClasses() throws IOException {
 
-        List<ClassInfo> deps = parser.getSourceClasses(); // TODO Assert
-        System.out.println(deps);
+        // List<ClassInfo> deps = parser.getSourceClasses(); // TODO Assert
+        // System.out.println(deps);
     }
 }
