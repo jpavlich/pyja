@@ -6,16 +6,11 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Debug (Launch) - Current File",
-            "request": "launch",
-            "mainClass": "${file}"
-        },
-        {
-            "type": "java",
             "name": "Debug (Launch)-JavaParserUtil<javaparser-util>",
             "request": "launch",
             "mainClass": "org.jpavlich.JavaParserUtil",
-            "projectName": "javaparser-util"
+            "projectName": "javaparser-util",
+            "classPaths": []
         }
     ]
 }
