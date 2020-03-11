@@ -137,13 +137,13 @@ public class JavaParserUtilTest {
                 home + "/.m2/repository/org/springframework/spring-jcl/5.2.3.RELEASE/spring-jcl-5.2.3.RELEASE.jar",
                 home + "/.m2/repository/org/thymeleaf/extras/thymeleaf-extras-java8time/3.0.4.RELEASE/thymeleaf-extras-java8time-3.0.4.RELEASE.jar" };
 
-        parser.init(new String[] { home + "/git/spring-petclinic/src/main/java" }, cp);
+        parser.analyze(new String[] { home + "/git/spring-petclinic/src/main/java" }, cp);
     }
 
     @Test
     public void getDependencies() throws IOException {
 
-        // List<List<String>> deps = parser.getDependencies(); // TODO Assert
+        List<List<String>> deps = parser.getDependencies(); // TODO Assert
         // System.out.println(deps);
     }
 

@@ -164,18 +164,18 @@ public class JavaParserUtilGradleTest {
                 home + "/.gradle/caches/modules-2/files-2.1/net.minidev/accessors-smart/1.1/a527213f2fea112a04c9bdf0ec0264e34104cd08/accessors-smart-1.1.jar",
                 home + "/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-web/1.5.18.RELEASE/ac69c498381c10bb5add3c19b517f25c51341886/spring-boot-starter-web-1.5.18.RELEASE.jar", };
 
-        parser.init(new String[] { home + "/git/sagan/sagan-site/src/main/java",
+        parser.analyze(new String[] { home + "/git/sagan/sagan-site/src/main/java",
                 home + "/git/sagan/sagan-site/../sagan-common/src/main/java" }, cp);
     }
 
     @Test
     public void getDependencies() throws IOException {
         try {
-            // List<List<String>> deps = parser.getDependencies();
+            List<List<String>> deps = parser.getDependencies();
+            System.out.println(deps);
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
-        // System.out.println(deps);
     }
 
     @Test
