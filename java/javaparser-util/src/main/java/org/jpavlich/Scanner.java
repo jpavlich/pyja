@@ -116,7 +116,7 @@ public abstract class Scanner {
     }
 
     protected boolean excluded(ClassSymbol cs) {
-        
+
         if (cs.asType().isPrimitiveOrVoid())
             return true;
         String name = cs.fullname.toString();

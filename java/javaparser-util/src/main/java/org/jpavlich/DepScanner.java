@@ -2,7 +2,10 @@ package org.jpavlich;
 
 import java.util.Arrays;
 
-import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.code.Symbol.ClassSymbol;
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Symbol.TypeSymbol;
+import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Type;
 
 /**
@@ -54,7 +57,8 @@ public class DepScanner extends Scanner {
         if (t instanceof ClassSymbol) {
             ClassSymbol cs = (ClassSymbol) t;
 
-            if (!included(cs) || excluded(cs)) return;
+            if (!included(cs) || excluded(cs))
+                return;
 
             String c1 = currentClass.fullname.toString();
             String c2 = cs.fullname.toString();

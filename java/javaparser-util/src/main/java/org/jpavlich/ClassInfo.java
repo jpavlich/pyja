@@ -6,12 +6,9 @@ import java.util.Set;
 import javax.persistence.Entity;
 
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
-
-import org.springframework.stereotype.Controller;
-
 import com.sun.tools.javac.code.Type;
 
-// import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Controller;
 
 public class ClassInfo {
 

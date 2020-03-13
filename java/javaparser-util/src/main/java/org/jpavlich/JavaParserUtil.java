@@ -16,17 +16,11 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
 import com.sun.source.util.JavacTask;
-import com.sun.tools.javac.code.Symbol.ClassSymbol;
-import com.sun.tools.javac.code.Symbol.MethodSymbol;
-import com.sun.tools.javac.code.Symbol.TypeSymbol;
-import com.sun.tools.javac.code.Symbol.VarSymbol;
-import com.sun.tools.javac.code.Type;
 
 public class JavaParserUtil {
 
     private Iterable<? extends Element> results;
     private DepScanner ds = new DepScanner();
-
 
     /**
      * @param sourcePaths Folders where to look for java files
@@ -63,7 +57,7 @@ public class JavaParserUtil {
     }
 
     public ClassDepGraph getDependencies() {
-        
+
         try {
             ds.exclude("java", "com.sun");
             ds.visitAll(results);
