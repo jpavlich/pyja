@@ -4,13 +4,9 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.lang.model.element.Element;
@@ -18,43 +14,19 @@ import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
-import javax.tools.JavaCompiler.CompilationTask;
+
 import com.sun.source.util.JavacTask;
+import com.sun.tools.javac.code.Symbol.ClassSymbol;
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Symbol.TypeSymbol;
+import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.code.Symbol.*;
 
 public class JavaParserUtil {
 
-    public class ClassInfo {
-        public String name;
-        public boolean entity = false;
-        public boolean controller = false;
-        public boolean repository = false;
-
-        public ClassInfo(Optional<String> name, boolean entity, boolean controller, boolean repository) {
-            this.entity = entity;
-            this.controller = controller;
-            this.repository = repository;
-            this.name = name.orElse("__anonymous__");
-        }
-
-        @Override
-        public String toString() {
-            return name + (entity ? " (e)" : "") + (controller ? " (c)" : "") + (repository ? " (r)" : "");
-        }
-    }
-
-    private String REPOSITORY_INTERFACE = "org.springframework.data.repository.Repository";
-
     private Iterable<? extends Element> results;
+    private DepScanner ds = new DepScanner();
 
-    public static String DEPENDENCY = "d";
-    public static String SUPERCLASS = "s";
-    public static String TYPE_PARAMETER = "t";
-    public static String FIELD = "f";
-    public static String METHOD_PARAM = "p";
-    public static String RETURN_TYPE = "r";
-    public static String VARIABLE = "v";
 
     /**
      * @param sourcePaths Folders where to look for java files
@@ -90,42 +62,25 @@ public class JavaParserUtil {
         }
     }
 
-    public List<List<String>> getDependencies() {
-        List<List<String>> deps = new ArrayList<>();
-        DepScanner ds = new DepScanner() {
-            ClassSymbol currentClass;
+    public ClassDepGraph getDependencies() {
+        
+        try {
+            ds.exclude("java", "com.sun");
+            ds.visitAll(results);
+            return ds.getClassDepGraph();
+        } catch (Throwable t) {
+            t.printStackTrace();
+            System.exit(1);
+        }
+        return null;
+    }
 
-            @Override
-            protected void visit(MethodSymbol ms) {
+    public void includeOnly(String... includePackages) {
+        ds.includeOnly(includePackages);
+    }
 
-            }
-
-            @Override
-            protected void visitField(VarSymbol vs) {
-                TypeSymbol t = vs.type.asElement();
-                if (t instanceof ClassSymbol) {
-                    ClassSymbol cs = (ClassSymbol) t;
-                    deps.add(Arrays.asList(currentClass.fullname.toString(), FIELD, cs.fullname.toString()));
-                }
-
-            }
-
-            @Override
-            protected void visitParam(VarSymbol vs) {
-
-            }
-
-            @Override
-            protected void visit(ClassSymbol cs) {
-                currentClass = cs;
-            }
-            
-
-        };
-        ds.exclude("java", "com.sun");
-        ds.include("sagan");
-        ds.visitAll(results);
-        return deps;
+    public void exclude(String... excludePackages) {
+        ds.exclude(excludePackages);
     }
 
 }

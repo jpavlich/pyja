@@ -1,10 +1,9 @@
 package javaparser_util;
 
 import java.io.IOException;
-import java.util.List;
 
+import org.jpavlich.ClassDepGraph;
 import org.jpavlich.JavaParserUtil;
-import org.jpavlich.JavaParserUtil.ClassInfo;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -171,21 +170,12 @@ public class JavaParserUtilGradleTest {
     @Test
     public void getDependencies() throws IOException {
         try {
-            List<List<String>> deps = parser.getDependencies();
+            parser.includeOnly("sagan");
+            ClassDepGraph deps = parser.getDependencies();
             System.out.println(deps);
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
     }
 
-    @Test
-    public void getSourceClasses() throws IOException {
-
-        try {
-            // List<ClassInfo> deps = parser.getSourceClasses(); // TODO Assert
-            // System.out.println(deps);
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-        }
-    }
 }

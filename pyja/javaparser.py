@@ -28,7 +28,7 @@ class JavaParser(object):
         javaparser_dep = Maven.dep(ProjDesc(groupId, artifactId, version))
         self.jvm.add_classpath(*javaparser_dep.all_jars())
 
-    def init(self, *projects):
+    def analyze(self, *projects):
         sources: Set[str] = set({})
         classpath: Set[str] = set({})
         for p in projects:
@@ -39,13 +39,11 @@ class JavaParser(object):
         from org.jpavlich import JavaParserUtil
 
         self.jpu = JavaParserUtil()
-        self.jpu.init(list(sources), list(classpath))
+        self.jpu.analyze(list(sources), list(classpath))
 
     def dependencies(self):
         return self.jpu.getDependencies()
 
-    def source_classes(self):
-        return self.jpu.getSourceClasses()
 
 
 if __name__ == "__main__":
@@ -57,7 +55,7 @@ if __name__ == "__main__":
     # jvm must start before doing the parsing
     jvm.start()
 
-    p.init(Project.create(f"{Path.home()}/git/spring-petclinic/pom.xml"))
+    p.analyze(Project.create(f"{Path.home()}/git/spring-petclinic/pom.xml"))
     
 
     jvm.stop()

@@ -1,128 +1,74 @@
 package org.jpavlich;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
-import javax.lang.model.element.Element;
-
-import com.sun.tools.javac.code.Symbol.ClassSymbol;
-import com.sun.tools.javac.code.Symbol.MethodSymbol;
-import com.sun.tools.javac.code.Symbol.TypeSymbol;
-import com.sun.tools.javac.code.Symbol.VarSymbol;
+import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type;
 
 /**
  * DepScanner
  */
-public abstract class DepScanner {
-    Set<String> visited = new HashSet<>();
-    private List<String> includedPackages = new ArrayList<>();
-    private List<String> excludedPackages = new ArrayList<>();
+public class DepScanner extends Scanner {
 
-    public DepScanner() {
-    }
+    public static String DEPENDENCY = "d";
+    public static String SUPERTYPE = "s";
+    public static String TYPE_PARAMETER = "t";
+    public static String FIELD = "f";
+    public static String METHOD_PARAM = "p";
+    public static String RETURN_TYPE = "r";
+    public static String VARIABLE = "v";
 
-    public void include(String... includePackages) {
-        this.includedPackages.addAll(Arrays.asList(includePackages));
-    }
+    private ClassSymbol currentClass;
+    private ClassDepGraph classDepGraph = new ClassDepGraph();
 
-    public void exclude(String... excludePackages) {
-        this.excludedPackages.addAll(Arrays.asList(excludePackages));
-    }
-
-    public void visitAll(Iterable<? extends Element> elements) {
-        for (Element c : elements) {
-            if (c instanceof ClassSymbol) {
-                ClassSymbol cs = (ClassSymbol) c;
-                _visit(cs);
-            }
-        }
-    }
-
-    private boolean included(String name) {
-        if (includedPackages.isEmpty()) {
-            return true;
-        }
-        for (String pkg : includedPackages) {
-            if (name.startsWith(pkg)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean excluded(String name) {
-        if (excludedPackages.isEmpty()) {
-            return false;
-        }
-        for (String pkg : excludedPackages) {
-            if (name.startsWith(pkg)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void _visit(ClassSymbol cs) {
-        String name = cs.fullname.toString();
-        if (visited.contains(name) || excluded(name) || !included(name))
-            return;
-
-        visited.add(name);
-
+    @Override
+    protected void visit(ClassSymbol cs) {
+        currentClass = cs;
+        classDepGraph.classes.add(ClassInfo.from(cs));
+        processType(cs.getSuperclass().asElement(), SUPERTYPE);
         for (Type i : cs.getInterfaces()) {
-            TypeSymbol e = i.asElement();
-            if (e instanceof ClassSymbol) {
-                _visit((ClassSymbol) e);
-            }
+            processType(i.asElement(), SUPERTYPE);
         }
+    }
 
-        visit(cs);
-        if (cs.members() != null) {
-            for (Element element : cs.members().getElements()) {
-                if (element instanceof MethodSymbol) {
-                    MethodSymbol ms = (MethodSymbol) element;
-                    visit(ms);
-                    if (ms.params != null) {
+    @Override
+    protected void visit(MethodSymbol ms) {
+        processType(ms.getReturnType().asElement(), RETURN_TYPE);
+    }
 
-                        for (VarSymbol param : ms.params) {
-                            // System.out.print("\tP: ");
-                            visitParam(param);
-                            _visit(param.type);
-                        }
-                    }
+    @Override
+    protected void visitField(VarSymbol vs) {
+        processVar(vs, FIELD);
+    }
 
-                    _visit(ms.getReturnType());
-                }
-                if (element instanceof VarSymbol) {
-                    VarSymbol vs = (VarSymbol) element;
-                    visitField(vs);
-                }
+    @Override
+    protected void visitParam(VarSymbol vs) {
+        processVar(vs, METHOD_PARAM);
+    }
+
+    private void processVar(VarSymbol vs, String depType) {
+        processType(vs.type.asElement(), depType);
+    }
+
+    private void processType(TypeSymbol t, String depType) {
+        if (t instanceof ClassSymbol) {
+            ClassSymbol cs = (ClassSymbol) t;
+
+            if (!included(cs) || excluded(cs)) return;
+
+            String c1 = currentClass.fullname.toString();
+            String c2 = cs.fullname.toString();
+            if (!c1.equals(c2)) {
+                classDepGraph.deps.add(Arrays.asList(c1, depType, c2));
             }
         }
     }
 
-    private void _visit(Type t) {
-        TypeSymbol ts = t.asElement();
-        if (ts instanceof ClassSymbol) {
-            _visit((ClassSymbol) ts);
-        } else {
-            // System.out.println("\t\tT: " + t);
-        }
-        for (Type p : t.getParameterTypes()) {
-            _visit(p);
-        }
+    /**
+     * @return the classDepGraph
+     */
+    public ClassDepGraph getClassDepGraph() {
+        return classDepGraph;
     }
 
-    protected abstract void visit(MethodSymbol ms);
-
-    protected abstract void visitField(VarSymbol vs);
-
-    protected abstract void visitParam(VarSymbol vs);
-
-    protected abstract void visit(ClassSymbol cs);
-
-}
+};
