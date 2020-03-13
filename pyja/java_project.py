@@ -36,6 +36,9 @@ class ProjDesc(object):
         self.version = version
         self.scope = scope
 
+    def __repr__(self):
+        return f"{self.groupId}-{self.artifactId} ({self.version}) {self.scope}"
+
 
 # TODO Support multimodule projects: find all child projects from the parent
 class Project(ABC):
@@ -157,7 +160,7 @@ class Maven(Project):
         return jars
 
     def multimodule_dependencies(self) -> Iterable[str]:
-        raise NotImplementedError
+        return []
 
 
 def find_jars(folder) -> List[str]:

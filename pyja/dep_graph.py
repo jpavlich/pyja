@@ -26,10 +26,11 @@ if __name__ == "__main__":
     jvm.start()
 
     project = Project.create(sys.argv[1])
-    p.init(project)
+    p.analyze(project)
 
-    classes = p.source_classes()
-    edges = p.dependencies()
+    dep =  p.dependencies()
+    classes = dep.classes
+    edges = dep.deps
 
     G = nx.DiGraph()
 

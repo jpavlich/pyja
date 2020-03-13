@@ -26,7 +26,8 @@ class JavaParser(object):
     def configure_jvm(self, jvm: JvmMgr):
         self.jvm = jvm
         javaparser_dep = Maven.dep(ProjDesc(groupId, artifactId, version))
-        self.jvm.add_classpath(*javaparser_dep.all_jars())
+        print(list(javaparser_dep.all_jars()))
+        self.jvm.add_classpath(*javaparser_dep.all_jars(), "/usr/lib/jvm/java-8-openjdk-amd64/lib/tools.jar")
 
     def analyze(self, *projects):
         sources: Set[str] = set({})
