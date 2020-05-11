@@ -14,7 +14,7 @@ def to_string(class_info) -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print(f"{sys.argv[0]} <pom.xml> <out_file>")
+        print(f"{sys.argv[0]} <project_file> <out_file> [packages]")
         exit(1)
 
     # Configure java jvm to parse java files
@@ -26,7 +26,9 @@ if __name__ == "__main__":
     jvm.start()
 
     project = Project.create(sys.argv[1])
+    packages = [pkg for pkg in sys.argv[3:]]
     p.analyze(project)
+    p.include_only(*packages)
 
     dep =  p.dependencies()
     classes = dep.classes
@@ -34,14 +36,17 @@ if __name__ == "__main__":
 
     G = nx.DiGraph()
 
+
     for c in classes:
         shape = (
             "trapezium"
-            if c.entity
+            if c.stereotype == c.Stereotype.ENTITY
             else "ellipse"
-            if c.controller
+            if c.stereotype == c.Stereotype.CONTROLLER
             else "cylinder"
-            if c.repository
+            if c.stereotype == c.Stereotype.REPOSITORY
+            else "polygon"
+            if c.stereotype == c.Stereotype.SERVICE
             else "box"
         )
         G.add_node(c.name, label=to_string(c), shape=shape)
@@ -57,6 +62,8 @@ if __name__ == "__main__":
     for s, t in G.edges():
         depTypes = G.get_edge_data(s, t)["depTypes"]
         G.get_edge_data(s, t)["label"] = ",".join(sorted(set(depTypes)))
+
+    print(f"Found {len(classes)} classes, {G.number_of_edges()} edges")
 
     S = G.subgraph([n.name for n in classes])
 

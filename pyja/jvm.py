@@ -4,6 +4,9 @@ from jpype.types import *
 from typing import List
 from pathlib import Path
 
+JDK_PATH = "/usr/lib/jvm/java-1.8.0-openjdk-amd64/"
+JVM_PATH = f"{JDK_PATH}/jre/lib/amd64/server/libjvm.so"
+TOOLS_JAR_PATH = f"{JDK_PATH}/lib/tools.jar"
 
 class JvmMgr(object):
     def __init__(self):
@@ -16,7 +19,7 @@ class JvmMgr(object):
         print("Classpath done")
 
     def start(self):
-        jpype.startJVM(convertStrings=False)
+        jpype.startJVM(JVM_PATH, convertStrings=False)
 
     def stop(self):
         jpype.shutdownJVM()

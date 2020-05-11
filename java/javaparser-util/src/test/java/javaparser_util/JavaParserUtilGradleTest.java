@@ -170,6 +170,7 @@ public class JavaParserUtilGradleTest {
     @Test
     public void getDependencies() throws IOException {
         try {
+            System.out.println("gradle getDependencies");
             parser.includeOnly("sagan");
             ClassDepGraph deps = parser.getDependencies();
             System.out.println(deps);

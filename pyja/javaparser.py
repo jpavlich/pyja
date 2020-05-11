@@ -3,7 +3,7 @@ import jpype.imports
 from jpype.types import *
 from typing import *
 from pathlib import Path
-from pyja.jvm import JvmMgr
+from pyja.jvm import JvmMgr,  TOOLS_JAR_PATH
 from pyja.java_project import Maven, ProjDesc, Project
 
 
@@ -27,7 +27,10 @@ class JavaParser(object):
         self.jvm = jvm
         javaparser_dep = Maven.dep(ProjDesc(groupId, artifactId, version))
         print(list(javaparser_dep.all_jars()))
-        self.jvm.add_classpath(*javaparser_dep.all_jars(), "/usr/lib/jvm/java-8-openjdk-amd64/lib/tools.jar")
+        self.jvm.add_classpath(
+            *javaparser_dep.all_jars(),
+            TOOLS_JAR_PATH,
+        )
 
     def analyze(self, *projects):
         sources: Set[str] = set({})
@@ -42,9 +45,14 @@ class JavaParser(object):
         self.jpu = JavaParserUtil()
         self.jpu.analyze(list(sources), list(classpath))
 
+    def include_only(self, *packages):
+        self.jpu.includeOnly(*packages)
+
+    def exclude(self, *packages):
+        self.jpu.exclude(*packages)
+
     def dependencies(self):
         return self.jpu.getDependencies()
-
 
 
 if __name__ == "__main__":
@@ -57,6 +65,5 @@ if __name__ == "__main__":
     jvm.start()
 
     p.analyze(Project.create(f"{Path.home()}/git/spring-petclinic/pom.xml"))
-    
 
     jvm.stop()
