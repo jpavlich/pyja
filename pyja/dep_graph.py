@@ -14,7 +14,7 @@ def to_string(class_info) -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print(f"{sys.argv[0]} <project_file> <out_file> [packages]")
+        print(f"{sys.argv[0]} <project_file (pom.xml or build.gradle)> <output file (pdf)> [java packages to analyze in the source code]")
         exit(1)
 
     # Configure java jvm to parse java files
