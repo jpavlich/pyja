@@ -63,9 +63,9 @@ if __name__ == "__main__":
         depTypes = G.get_edge_data(s, t)["depTypes"]
         G.get_edge_data(s, t)["label"] = ",".join(sorted(set(depTypes)))
 
-    print(f"Found {len(classes)} classes, {G.number_of_edges()} edges")
 
     S = G.subgraph([n.name for n in classes])
+    print(f"Found {len(S)} classes, {S.number_of_edges()} edges")
 
     A = nx.nx_agraph.to_agraph(S)
     A.layout(prog="dot")
