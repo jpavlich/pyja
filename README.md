@@ -17,3 +17,9 @@ PYthon Java Analysis
   * `p`: METHOD_PARAM
   * `r`: RETURN_TYPE
   * `v`: VARIABLE
+
+# Class types
+  * `c`: Controller
+  * `r`: Repository
+  * `e`: Entity
+  * `s`: Service
