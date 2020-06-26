@@ -9,3 +9,11 @@ PYthon Java Analysis
 `./install.sh`
 
 
+# Dependency types
+  * `d`: DEPENDENCY
+  * `s`: SUPERTYPE
+  * `t`: TYPE_PARAMETER
+  * `f`: FIELD
+  * `p`: METHOD_PARAM
+  * `r`: RETURN_TYPE
+  * `v`: VARIABLE
